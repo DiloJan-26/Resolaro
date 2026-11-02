@@ -22,7 +22,8 @@ dist/
 .DS_Store
 Thumbs.db
 
-# ignore docs
+# Local reports
 docs/
 AGENTS.md
+
 
