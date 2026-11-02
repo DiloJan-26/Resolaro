@@ -1,0 +1,12 @@
+.git
+docs
+AGENTS.md
+**/.env
+**/.env.*
+**/.venv
+**/node_modules
+**/.npm-cache
+**/__pycache__
+**/.pytest_cache
+apps/web
+.github

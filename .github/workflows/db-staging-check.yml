@@ -1,0 +1,37 @@
+name: Database staging migration check
+on:
+  workflow_dispatch:
+    inputs:
+      schema:
+        description: Database schema to migrate (use isolated schema first)
+        required: true
+        default: resolaro_phase1_test
+        type: choice
+        options:
+          - resolaro_phase1_test
+          - public
+permissions:
+  contents: read
+jobs:
+  isolated-migration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: staging-db
+    defaults:
+      run:
+        working-directory: apps/api
+    env:
+      MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+      MIGRATION_SCHEMA: ${{ inputs.schema }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.13.6"
+          enable-cache: false
+      - run: uv python install 3.11
+      - run: uv sync --frozen
+      - name: Upgrade selected schema
+        run: uv run alembic upgrade head
+      - name: Compare schema with models
+        run: uv run alembic check

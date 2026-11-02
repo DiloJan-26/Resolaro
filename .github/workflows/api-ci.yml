@@ -1,0 +1,29 @@
+name: API CI
+on:
+  push:
+    branches: [product/resolaro]
+  pull_request:
+    branches: [product/resolaro]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.13.6"
+          enable-cache: false
+      - run: uv python install 3.11
+      - run: uv sync --frozen
+      - run: uv run python -m compileall src/resolaro
+      - run: uv run pytest tests/unit tests/api -q
+      - name: Build API image without publishing
+        run: docker build -f apps/api/Dockerfile -t resolaro-api:ci .
+        working-directory: .
