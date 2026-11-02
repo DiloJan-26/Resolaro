@@ -1,4 +1,4 @@
-import { Component, useEffect, useState, type ErrorInfo, type FormEvent, type PropsWithChildren } from 'react';
+import { Component, useEffect, useState, type FormEvent, type PropsWithChildren } from 'react';
 import { Link, NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { api, ApiError, type Cases, type Me } from './api';
 import { useAuth } from './auth';
@@ -9,7 +9,7 @@ import { Button, Card, Notice } from './ui';
 class ErrorBoundary extends Component<PropsWithChildren, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch(_error: Error, _info: ErrorInfo) { /* Do not log potentially sensitive browser state. */ }
+  componentDidCatch() { /* Do not log potentially sensitive browser state. */ }
   render() { return this.state.failed ? <main className="login-wrap"><Card><h1>Application unavailable</h1><p>Reload the page or contact an administrator.</p></Card></main> : this.props.children; }
 }
 
