@@ -1,0 +1,58 @@
+name: Publish API image
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Confirm publication of the tested product/resolaro revision
+        required: true
+        type: choice
+        options:
+          - publish-tested-revision
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-api-image
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/product/resolaro'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Resolve public GHCR image tags
+        id: image
+        shell: bash
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/resolaro-api"
+          echo "name=$image" >> "$GITHUB_OUTPUT"
+          echo "revision=$image:sha-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "staging=$image:staging" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to GHCR
+        shell: bash
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Build tested API revision
+        run: >-
+          docker build
+          --file apps/api/Dockerfile
+          --label org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          --label org.opencontainers.image.revision=${{ github.sha }}
+          --tag "${{ steps.image.outputs.revision }}"
+          --tag "${{ steps.image.outputs.staging }}"
+          .
+
+      - name: Publish immutable and staging tags
+        run: |
+          docker push "${{ steps.image.outputs.revision }}"
+          docker push "${{ steps.image.outputs.staging }}"
+
+      - name: Record published reference
+        run: echo "Published ${{ steps.image.outputs.revision }}" >> "$GITHUB_STEP_SUMMARY"
